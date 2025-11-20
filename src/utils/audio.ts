@@ -41,7 +41,10 @@ export const initAudio = async () => {
 };
 
 export const playChord = (notes: string[], duration: string = "1n", time?: number) => {
-  if (!synth) return;
+  if (!synth) {
+    console.error("playChord called but synth is not initialized. Call initAudio() first.");
+    return;
+  }
   synth.triggerAttackRelease(notes, duration, time);
 };
 
