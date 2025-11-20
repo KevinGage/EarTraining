@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, Play, Settings, Check, X, Volume2, ChevronDown, ChevronUp, ArrowRight, RotateCcw } from "lucide-react";
-import { initAudio, playProgression, playChord, getNotesForRomanNumeral, stopAudio } from "@/utils/audio";
+import { playProgression, playChord, getNotesForRomanNumeral, stopAudio } from "@/utils/audio";
 
 // Game Constants
 const ALL_CHORDS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
