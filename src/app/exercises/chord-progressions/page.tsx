@@ -54,19 +54,11 @@ export default function ChordProgressionPage() {
     audioRef.current = { currentProgression, currentKey, use7ths };
   }, [currentProgression, currentKey, use7ths]);
 
-  // Ref to track active playback Promise and its reject function
-  const playbackPromiseRef = useRef<{ promise: Promise<any> | null, reject: ((reason?: any) => void) | null }>({ promise: null, reject: null });
 
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
       stopAudio();
-      // If a playback Promise is pending, reject it to avoid memory leaks/unhandled rejections
-      if (playbackPromiseRef.current && playbackPromiseRef.current.reject) {
-        playbackPromiseRef.current.reject(new Error("Component unmounted during playback"));
-        playbackPromiseRef.current.promise = null;
-        playbackPromiseRef.current.reject = null;
-      }
     };
   }, []);
 
