@@ -54,19 +54,14 @@ export default function ChordProgressionPage() {
     audioRef.current = { currentProgression, currentKey, use7ths };
   }, [currentProgression, currentKey, use7ths]);
 
-  // Ref to track active playback Promise and its reject function
-  const playbackPromiseRef = useRef<{ promise: Promise<any> | null, reject: ((reason?: any) => void) | null }>({ promise: null, reject: null });
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
 
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       stopAudio();
-      // If a playback Promise is pending, reject it to avoid memory leaks/unhandled rejections
-      if (playbackPromiseRef.current && playbackPromiseRef.current.reject) {
-        playbackPromiseRef.current.reject(new Error("Component unmounted during playback"));
-        playbackPromiseRef.current.promise = null;
-        playbackPromiseRef.current.reject = null;
-      }
     };
   }, []);
 
@@ -126,8 +121,11 @@ export default function ChordProgressionPage() {
     setGameState("playing");
     try {
       await playProgression(prog, key, use7ths);
-      setIsPlaying(false);
-      setGameState("guessing");
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setGameState("guessing");
+      }
     } catch (error) {
       // Playback was cancelled, just reset state
       if (error instanceof Error && error.message === 'Playback cancelled') {
@@ -136,8 +134,11 @@ export default function ChordProgressionPage() {
         // Unexpected error - consider logging
         console.error('Unexpected playback error:', error);
       }
-      setIsPlaying(false);
-      setGameState("guessing");
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setGameState("guessing");
+      }
     }
   };
 
