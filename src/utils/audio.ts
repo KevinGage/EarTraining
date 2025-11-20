@@ -99,6 +99,7 @@ export const stopAudio = () => {
   }
   Tone.Transport.cancel();
   Tone.Transport.stop();
+  Tone.Transport.position = 0;
 };
 
 export const playProgression = async (
