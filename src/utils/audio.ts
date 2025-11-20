@@ -39,9 +39,9 @@ export const initAudio = async () => {
   }
 };
 
-export const playChord = (notes: string[], duration: string = "1n") => {
+export const playChord = (notes: string[], duration: string = "1n", time?: number) => {
   if (!synth) return;
-  synth.triggerAttackRelease(notes, duration);
+  synth.triggerAttackRelease(notes, duration, time);
 };
 
 export const getNotesForRomanNumeral = (
@@ -87,19 +87,42 @@ export const getNotesForRomanNumeral = (
   return notes;
 };
 
+export const stopAudio = () => {
+  Tone.Transport.cancel();
+  Tone.Transport.stop();
+};
+
 export const playProgression = async (
   progression: string[], 
   keyRoot: string = "C4",
   use7ths: boolean = false,
   tempo: number = 120
-) => {
+): Promise<void> => {
   await initAudio();
-  const now = Tone.now();
-  const duration = "2n";
-  const timePerChord = Tone.Time(duration).toSeconds();
+  
+  // Stop any previous playback
+  stopAudio();
 
-  progression.forEach((roman, index) => {
-    const notes = getNotesForRomanNumeral(roman, keyRoot, use7ths);
-    synth?.triggerAttackRelease(notes, duration, now + index * timePerChord);
+  return new Promise((resolve) => {
+    const duration = "2n";
+    const timePerChord = Tone.Time(duration).toSeconds();
+    
+    // Set tempo (though we are using absolute seconds for spacing, Transport handles the clock)
+    Tone.Transport.bpm.value = tempo;
+
+    progression.forEach((roman, index) => {
+      const notes = getNotesForRomanNumeral(roman, keyRoot, use7ths);
+      Tone.Transport.schedule((time) => {
+        playChord(notes, duration, time);
+      }, index * timePerChord);
+    });
+
+    // Schedule completion
+    Tone.Transport.schedule((time) => {
+      Tone.Transport.stop();
+      resolve();
+    }, progression.length * timePerChord);
+
+    Tone.Transport.start();
   });
 };

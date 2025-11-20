@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, Play, Settings, Check, X, Volume2, ChevronDown, ChevronUp, ArrowRight, RotateCcw } from "lucide-react";
-import { initAudio, playProgression, playChord, getNotesForRomanNumeral } from "@/utils/audio";
+import { initAudio, playProgression, playChord, getNotesForRomanNumeral, stopAudio } from "@/utils/audio";
 
 // Game Constants
 const ALL_CHORDS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
@@ -53,6 +53,13 @@ export default function ChordProgressionPage() {
   useEffect(() => {
     audioRef.current = { currentProgression, currentKey, use7ths };
   }, [currentProgression, currentKey, use7ths]);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      stopAudio();
+    };
+  }, []);
 
   // Generate a new progression
   const generateProgression = () => {
@@ -410,7 +417,7 @@ export default function ChordProgressionPage() {
           {/* Play Button */}
           <button
             onClick={() => handlePlay()}
-            disabled={currentProgression.length === 0 || isPlaying}
+            disabled={currentProgression.length === 0}
             className={`mb-12 flex h-24 w-24 items-center justify-center rounded-full border-4 transition-all ${
               isPlaying 
                 ? "scale-95 border-indigo-500/50 bg-indigo-500/10 text-indigo-400" 
