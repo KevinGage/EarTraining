@@ -115,9 +115,15 @@ export default function ChordProgressionPage() {
     
     setIsPlaying(true);
     setGameState("playing");
-    await playProgression(prog, key, use7ths);
-    setIsPlaying(false);
-    setGameState("guessing");
+    try {
+      await playProgression(prog, key, use7ths);
+      setIsPlaying(false);
+      setGameState("guessing");
+    } catch {
+      // Playback was cancelled, just reset state
+      setIsPlaying(false);
+      setGameState("guessing");
+    }
   };
 
   const handleChordClick = (chord: string) => {

@@ -18,6 +18,7 @@ const CHORD_INTERVALS: Record<string, number[]> = {
 const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
 
 let synth: Tone.PolySynth | null = null;
+let activePlaybackReject: ((reason?: Error) => void) | null = null;
 
 export const initAudio = async () => {
   if (Tone.context.state !== "running") {
@@ -88,6 +89,11 @@ export const getNotesForRomanNumeral = (
 };
 
 export const stopAudio = () => {
+  // Reject any pending playback promise before cancelling
+  if (activePlaybackReject) {
+    activePlaybackReject(new Error('Playback cancelled'));
+    activePlaybackReject = null;
+  }
   Tone.Transport.cancel();
   Tone.Transport.stop();
 };
@@ -103,7 +109,10 @@ export const playProgression = async (
   // Stop any previous playback
   stopAudio();
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    // Track this promise so it can be rejected if cancelled
+    activePlaybackReject = reject;
+    
     const duration = "2n";
     Tone.Transport.bpm.value = tempo;
     const timePerChord = Tone.Time(duration).toSeconds();
@@ -118,6 +127,7 @@ export const playProgression = async (
     // Schedule completion
     Tone.Transport.schedule((time) => {
       Tone.Transport.stop();
+      activePlaybackReject = null;
       resolve();
     }, progression.length * timePerChord);
 
