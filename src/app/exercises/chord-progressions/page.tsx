@@ -124,9 +124,21 @@ export default function ChordProgressionPage() {
     
     setIsPlaying(true);
     setGameState("playing");
-    await playProgression(prog, key, use7ths);
-    setIsPlaying(false);
-    setGameState("guessing");
+    try {
+      await playProgression(prog, key, use7ths);
+      setIsPlaying(false);
+      setGameState("guessing");
+    } catch (error) {
+      // Playback was cancelled, just reset state
+      if (error instanceof Error && error.message === 'Playback cancelled') {
+        // Expected cancellation
+      } else {
+        // Unexpected error - consider logging
+        console.error('Unexpected playback error:', error);
+      }
+      setIsPlaying(false);
+      setGameState("guessing");
+    }
   };
 
   const handleChordClick = (chord: string) => {
