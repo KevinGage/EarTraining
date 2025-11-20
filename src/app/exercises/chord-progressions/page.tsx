@@ -126,7 +126,11 @@ export default function ChordProgressionPage() {
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsPlaying(false);
-        setGameState("guessing");
+        if (wasRevealed) {
+          setGameState("revealed");
+        } else {
+          setGameState("guessing");
+        }
       }
     } catch (error) {
       // Playback was cancelled, just reset state
@@ -139,13 +143,12 @@ export default function ChordProgressionPage() {
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsPlaying(false);
-        
-    if (wasRevealed) {
-      setGameState("revealed");
-    } else {
-      setGameState("guessing");
+        if (wasRevealed) {
+          setGameState("revealed");
+        } else {
+          setGameState("guessing");
+        }
       }
-    }
     }
   };
 
