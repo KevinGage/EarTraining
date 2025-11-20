@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, Play, Settings, Check, X, Volume2, ChevronDown, ChevronUp, ArrowRight, RotateCcw } from "lucide-react";
-import { initAudio, playProgression, playChord, getNotesForRomanNumeral, stopAudio } from "@/utils/audio";
+import { playProgression, playChord, getNotesForRomanNumeral, stopAudio } from "@/utils/audio";
 
 // Game Constants
 const ALL_CHORDS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
@@ -54,9 +54,13 @@ export default function ChordProgressionPage() {
     audioRef.current = { currentProgression, currentKey, use7ths };
   }, [currentProgression, currentKey, use7ths]);
 
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
+
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       stopAudio();
     };
   }, []);
@@ -117,13 +121,31 @@ export default function ChordProgressionPage() {
 
     setIsPlaying(true);
     setGameState("playing");
-    await playProgression(prog, key, use7ths);
-    setIsPlaying(false);
-    
+    try {
+      await playProgression(prog, key, use7ths);
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setGameState("guessing");
+      }
+    } catch (error) {
+      // Playback was cancelled, just reset state
+      if (error instanceof Error && error.message === 'Playback cancelled') {
+        // Expected cancellation
+      } else {
+        // Unexpected error - consider logging
+        console.error('Unexpected playback error:', error);
+      }
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        
     if (wasRevealed) {
       setGameState("revealed");
     } else {
       setGameState("guessing");
+      }
+    }
     }
   };
 
