@@ -54,6 +54,8 @@ export default function ChordProgressionPage() {
     audioRef.current = { currentProgression, currentKey, use7ths };
   }, [currentProgression, currentKey, use7ths]);
 
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
 
   // Cleanup audio on unmount
   useEffect(() => {
