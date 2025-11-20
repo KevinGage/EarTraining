@@ -111,20 +111,30 @@ export default function ChordProgressionPage() {
     return { newProgression, newKey };
   };
 
-  const handlePlay = async (progressionToPlay?: string[], keyToPlay?: string) => {
+  const handlePlay = async (progressionToPlay?: string[], keyToPlay?: string, forceNewGame: boolean = false) => {
     const prog = progressionToPlay || audioRef.current.currentProgression;
     const key = keyToPlay || audioRef.current.currentKey;
     
     if (prog.length === 0) return;
     
+    const wasRevealed = !forceNewGame && gameState === "revealed";
+
     setIsPlaying(true);
-    setGameState("playing");
+    // Only change state to 'playing' if we are not already in 'revealed' state
+    // This prevents the UI from switching back to input mode during replay
+    if (!wasRevealed) {
+      setGameState("playing");
+    }
+
     try {
       await playProgression(prog, key, use7ths);
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsPlaying(false);
-        setGameState("guessing");
+        // Only restore state if we changed it
+        if (!wasRevealed) {
+          setGameState("guessing");
+        }
       }
     } catch (error) {
       // Playback was cancelled, just reset state
@@ -137,7 +147,10 @@ export default function ChordProgressionPage() {
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsPlaying(false);
-        setGameState("guessing");
+        // Only restore state if we changed it
+        if (!wasRevealed) {
+          setGameState("guessing");
+        }
       }
     }
   };
@@ -218,7 +231,7 @@ export default function ChordProgressionPage() {
 
   const nextExercise = async () => {
     const { newProgression, newKey } = generateProgression();
-    await handlePlay(newProgression, newKey);
+    await handlePlay(newProgression, newKey, true);
   };
 
   const toggleAllowedChord = (chord: string) => {
