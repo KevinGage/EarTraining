@@ -105,11 +105,9 @@ export const playProgression = async (
 
   return new Promise((resolve) => {
     const duration = "2n";
+    Tone.Transport.bpm.value = tempo;
     const timePerChord = Tone.Time(duration).toSeconds();
     
-    // Set tempo (though we are using absolute seconds for spacing, Transport handles the clock)
-    Tone.Transport.bpm.value = tempo;
-
     progression.forEach((roman, index) => {
       const notes = getNotesForRomanNumeral(roman, keyRoot, use7ths);
       Tone.Transport.schedule((time) => {
