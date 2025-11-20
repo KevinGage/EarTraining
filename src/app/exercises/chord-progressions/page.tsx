@@ -113,11 +113,18 @@ export default function ChordProgressionPage() {
     
     if (prog.length === 0) return;
     
+    const wasRevealed = gameState === "revealed";
+
     setIsPlaying(true);
     setGameState("playing");
     await playProgression(prog, key, use7ths);
     setIsPlaying(false);
-    setGameState("guessing");
+    
+    if (wasRevealed) {
+      setGameState("revealed");
+    } else {
+      setGameState("guessing");
+    }
   };
 
   const handleChordClick = (chord: string) => {
