@@ -1,63 +1,68 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Music, ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-neutral-950 text-white selection:bg-indigo-500/30">
+      {/* Background Gradients */}
+      <div className="fixed inset-0 -z-10 h-full w-full bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+
+      <main className="container mx-auto px-6 py-24 md:py-32">
+        {/* Hero Section */}
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="mb-6 inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-300 backdrop-blur-sm">
+            <span className="mr-2 flex h-2 w-2">
+              <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500"></span>
+            </span>
+            v1.0 Beta
+          </div>
+          <h1 className="mb-6 text-5xl font-bold tracking-tight text-white sm:text-7xl">
+            Train your ear. <br />
+            <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+              Master the music.
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mb-10 text-lg text-neutral-400 sm:text-xl">
+            Simple, effective tools designed to help musicians of all levels improve their aural skills. Start practicing today.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Exercises Grid */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <h2 className="mb-8 text-2xl font-semibold text-white">Available Exercises</h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Chord Progressions Card */}
+            <Link
+              href="/exercises/chord-progressions"
+              className="group relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6 transition-all hover:border-indigo-500/50 hover:bg-neutral-900/80 hover:shadow-lg hover:shadow-indigo-500/10"
+            >
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-300">
+                <Music className="h-6 w-6" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-white">Chord Progressions</h3>
+              <p className="mb-6 text-sm text-neutral-400">
+                Listen to a series of chords and identify the progression. Customize key, length, and complexity.
+              </p>
+              <div className="flex items-center text-sm font-medium text-indigo-400 group-hover:text-indigo-300">
+                Start Exercise <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+
+            {/* Placeholder for future exercises */}
+            <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950/30 p-6 opacity-50 grayscale">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-neutral-800 text-neutral-500">
+                <Music className="h-6 w-6" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-neutral-500">Interval Training</h3>
+              <p className="mb-6 text-sm text-neutral-600">
+                Coming soon. Identify intervals between two notes.
+              </p>
+              <div className="flex items-center text-sm font-medium text-neutral-600 cursor-not-allowed">
+                Coming Soon
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
