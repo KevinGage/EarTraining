@@ -24,7 +24,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="mb-10 text-lg text-neutral-400 sm:text-xl">
-            Simple, effective tools designed to help musicians of all levels improve their aural skills. Start practicing today.
+            Stop guessing. Start recognizing.
           </p>
         </div>
 

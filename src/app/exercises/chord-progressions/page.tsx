@@ -7,11 +7,12 @@ import { initAudio, playProgression, playChord, getNotesForRomanNumeral } from "
 
 // Game Constants
 const ALL_CHORDS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
-const KEYS = ["C4", "G3", "D4", "A3", "E4", "B3", "F4", "Bb3", "Eb4", "Ab3", "Db4", "Gb3"];
-const KEY_NAMES: Record<string, string> = {
-  "C4": "C Major", "G3": "G Major", "D4": "D Major", "A3": "A Major", "E4": "E Major", "B3": "B Major",
-  "F4": "F Major", "Bb3": "Bb Major", "Eb4": "Eb Major", "Ab3": "Ab Major", "Db4": "Db Major", "Gb3": "Gb Major"
+const NOTES = ["C", "G", "D", "A", "E", "B", "F", "Bb", "Eb", "Ab", "Db", "Gb"];
+const NOTE_NAMES: Record<string, string> = {
+  "C": "C Major", "G": "G Major", "D": "D Major", "A": "A Major", "E": "E Major", "B": "B Major",
+  "F": "F Major", "Bb": "Bb Major", "Eb": "Eb Major", "Ab": "Ab Major", "Db": "Db Major", "Gb": "Gb Major"
 };
+const ALL_OCTAVES = [2, 3, 4, 5];
 
 export default function ChordProgressionPage() {
   // Settings State
@@ -19,14 +20,17 @@ export default function ChordProgressionPage() {
   const [progressionLength, setProgressionLength] = useState(4);
   const [startOnRoot, setStartOnRoot] = useState(true);
   const [allowedChords, setAllowedChords] = useState<string[]>(ALL_CHORDS);
-  const [selectedKey, setSelectedKey] = useState<string>("Random"); // "Random" or specific key
+  const [selectedKey, setSelectedKey] = useState<string>("Random"); // "Random" or specific note (e.g. "C")
+  const [availableOctaves, setAvailableOctaves] = useState<number[]>([3, 4]);
+  const [fixedOctave, setFixedOctave] = useState<number>(4);
   const [use7ths, setUse7ths] = useState(false);
   const [playOnClick, setPlayOnClick] = useState(false);
   
   // Game State
   const [currentProgression, setCurrentProgression] = useState<string[]>([]);
-  const [currentKey, setCurrentKey] = useState("C4");
+  const [currentKey, setCurrentKey] = useState("C4"); // Full key string with octave
   const [userAnswer, setUserAnswer] = useState<string[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gameState, setGameState] = useState<"idle" | "playing" | "guessing" | "revealed">("idle");
   const [feedback, setFeedback] = useState<("correct" | "incorrect" | null)[]>([]);
@@ -41,7 +45,8 @@ export default function ChordProgressionPage() {
     setUserAnswer([]);
     setFeedback([]);
     setGameState("idle");
-  }, [progressionLength, startOnRoot, allowedChords, selectedKey, use7ths, playOnClick]);
+    setEditingIndex(null);
+  }, [progressionLength, startOnRoot, allowedChords, selectedKey, availableOctaves, fixedOctave, use7ths, playOnClick]);
 
   // Refs for audio to avoid stale closures
   const audioRef = useRef({ currentProgression, currentKey, use7ths });
@@ -64,14 +69,21 @@ export default function ChordProgressionPage() {
       }
     }
 
-    // Determine Key
-    let newKey = currentKey;
+    // Determine Key and Octave
+    let note = selectedKey;
+    let octave = fixedOctave;
+
     if (selectedKey === "Random") {
-      const randomKeyIndex = Math.floor(Math.random() * KEYS.length);
-      newKey = KEYS[randomKeyIndex];
-    } else {
-      newKey = selectedKey;
+      const randomNoteIndex = Math.floor(Math.random() * NOTES.length);
+      note = NOTES[randomNoteIndex];
+      
+      // Pick random octave from available
+      const octs = availableOctaves.length > 0 ? availableOctaves : [4];
+      const randomOctaveIndex = Math.floor(Math.random() * octs.length);
+      octave = octs[randomOctaveIndex];
     }
+
+    const newKey = `${note}${octave}`;
 
     setCurrentProgression(newProgression);
     setCurrentKey(newKey);
@@ -82,6 +94,7 @@ export default function ChordProgressionPage() {
     
     setFeedback([]);
     setGameState("idle");
+    setEditingIndex(null);
     setIsSettingsOpen(false);
     
     return { newProgression, newKey };
@@ -108,7 +121,19 @@ export default function ChordProgressionPage() {
       playChord(getNotesForRomanNumeral(chord, currentKey, use7ths), "8n");
     }
 
-    if (userAnswer.length < currentProgression.length) {
+    if (editingIndex !== null) {
+      // Replace existing answer
+      const newAnswer = [...userAnswer];
+      newAnswer[editingIndex] = chord;
+      setUserAnswer(newAnswer);
+      setEditingIndex(null); // Stop editing after selection
+      
+      // Auto-check if full
+      if (newAnswer.length === currentProgression.length && !newAnswer.includes(undefined as any)) {
+        checkAnswer(newAnswer);
+      }
+    } else if (userAnswer.length < currentProgression.length) {
+      // Append new answer
       const newAnswer = [...userAnswer, chord];
       setUserAnswer(newAnswer);
       
@@ -119,12 +144,25 @@ export default function ChordProgressionPage() {
     }
   };
 
+  const handleSlotClick = (index: number) => {
+    if (gameState !== "guessing" && gameState !== "idle") return;
+    
+    // Don't allow editing the fixed root if enabled
+    if (startOnRoot && index === 0) return;
+    
+    // Only allow editing if the slot is filled or it's the next available slot
+    if (index < userAnswer.length) {
+      setEditingIndex(index);
+    }
+  };
+
   const checkAnswer = (answer: string[]) => {
     const newFeedback = answer.map((chord, index) => 
       chord === currentProgression[index] ? "correct" : "incorrect"
     );
     setFeedback(newFeedback);
     setGameState("revealed");
+    setEditingIndex(null);
 
     const isAllCorrect = newFeedback.every(f => f === "correct");
     if (isAllCorrect) {
@@ -146,6 +184,7 @@ export default function ChordProgressionPage() {
     if (gameState !== "guessing" && gameState !== "idle") return;
     const initialAnswer = startOnRoot ? ["I"] : [];
     setUserAnswer(initialAnswer);
+    setEditingIndex(null);
   };
 
   const nextExercise = async () => {
@@ -159,6 +198,25 @@ export default function ChordProgressionPage() {
     } else {
       setAllowedChords(prev => [...prev, chord]);
     }
+  };
+
+  const toggleAvailableOctave = (octave: number) => {
+    if (availableOctaves.includes(octave)) {
+      // Don't allow unchecking the last octave
+      if (availableOctaves.length > 1) {
+        setAvailableOctaves(prev => prev.filter(o => o !== octave));
+      }
+    } else {
+      setAvailableOctaves(prev => [...prev, octave].sort());
+    }
+  };
+
+  // Helper to get display name for key
+  const getKeyDisplayName = (keyStr: string) => {
+    // keyStr is like "C4" or "F#3"
+    // Extract note part
+    const note = keyStr.slice(0, -1);
+    return NOTE_NAMES[note] || keyStr;
   };
 
   return (
@@ -197,7 +255,7 @@ export default function ChordProgressionPage() {
                   <div>
                     <label className="mb-2 block text-sm font-medium text-neutral-400">Progression Length</label>
                     <div className="flex gap-2">
-                      {[3, 4, 5, 6].map(len => (
+                      {[2, 3, 4, 5, 6].map(len => (
                         <button
                           key={len}
                           onClick={() => setProgressionLength(len)}
@@ -213,18 +271,54 @@ export default function ChordProgressionPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-neutral-400">Key</label>
-                    <select
-                      value={selectedKey}
-                      onChange={(e) => setSelectedKey(e.target.value)}
-                      className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-2 text-white focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="Random">Random</option>
-                      {KEYS.map(key => (
-                        <option key={key} value={key}>{KEY_NAMES[key]}</option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-neutral-400">Key</label>
+                      <select
+                        value={selectedKey}
+                        onChange={(e) => setSelectedKey(e.target.value)}
+                        className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                      >
+                        <option value="Random">Random</option>
+                        {NOTES.map(note => (
+                          <option key={note} value={note}>{NOTE_NAMES[note]}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {selectedKey !== "Random" ? (
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-neutral-400">Octave</label>
+                        <select
+                          value={fixedOctave}
+                          onChange={(e) => setFixedOctave(Number(e.target.value))}
+                          className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                        >
+                          {ALL_OCTAVES.map(oct => (
+                            <option key={oct} value={oct}>{oct}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                       <div>
+                        <label className="mb-2 block text-sm font-medium text-neutral-400">Allowed Octaves</label>
+                        <div className="flex gap-2">
+                          {ALL_OCTAVES.map(oct => (
+                            <button
+                              key={oct}
+                              onClick={() => toggleAvailableOctave(oct)}
+                              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
+                                availableOctaves.includes(oct)
+                                  ? "border-indigo-500 bg-indigo-500/20 text-indigo-300"
+                                  : "border-neutral-700 bg-neutral-800 text-neutral-500 hover:border-neutral-600"
+                              }`}
+                            >
+                              {oct}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -299,7 +393,7 @@ export default function ChordProgressionPage() {
           {/* Info Bar */}
           <div className="mb-8 flex w-full items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900/30 px-6 py-3">
              <div className="text-sm font-medium text-neutral-400">
-               Key: <span className="text-indigo-400">{KEY_NAMES[currentKey]}</span>
+               Key: <span className="text-indigo-400">{getKeyDisplayName(currentKey)}</span>
              </div>
              <div className="flex gap-6 text-sm font-medium text-neutral-400">
                 <div className="flex gap-2">
@@ -331,21 +425,30 @@ export default function ChordProgressionPage() {
             <div className="flex flex-wrap justify-center gap-4">
               {Array.from({ length: progressionLength }).map((_, i) => {
                 const isFixedRoot = startOnRoot && i === 0;
+                const isEditing = editingIndex === i;
+                const isFilled = i < userAnswer.length;
+                
                 return (
-                  <div 
+                  <button 
                     key={i}
+                    onClick={() => handleSlotClick(i)}
+                    disabled={gameState !== "guessing" && gameState !== "idle"}
                     className={`flex h-16 w-16 items-center justify-center rounded-xl border-2 text-xl font-bold transition-all ${
                       gameState === "revealed"
                         ? feedback[i] === "correct"
                           ? "border-green-500 bg-green-500/10 text-green-400"
                           : "border-red-500 bg-red-500/10 text-red-400"
-                        : userAnswer[i]
-                        ? isFixedRoot ? "border-neutral-700 bg-neutral-800 text-neutral-500" : "border-indigo-500 bg-indigo-500/10 text-indigo-300"
-                        : "border-neutral-800 bg-neutral-900 text-neutral-600"
+                        : isEditing
+                          ? "border-indigo-400 bg-indigo-500/20 text-indigo-300 ring-2 ring-indigo-500/50"
+                          : isFilled
+                            ? isFixedRoot 
+                              ? "border-neutral-700 bg-neutral-800 text-neutral-500 cursor-not-allowed" 
+                              : "border-indigo-500 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20"
+                            : "border-neutral-800 bg-neutral-900 text-neutral-600"
                     }`}
                   >
                     {gameState === "revealed" ? userAnswer[i] || "?" : userAnswer[i] || "?"}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -391,7 +494,7 @@ export default function ChordProgressionPage() {
                   <button
                     key={chord}
                     onClick={() => handleChordClick(chord)}
-                    disabled={gameState === "idle" || userAnswer.length >= progressionLength || !allowedChords.includes(chord)}
+                    disabled={gameState === "idle" || (!editingIndex && userAnswer.length >= progressionLength) || !allowedChords.includes(chord)}
                     className={`flex h-14 w-14 items-center justify-center rounded-xl border text-lg font-bold transition-all sm:h-16 sm:w-16 ${
                       allowedChords.includes(chord)
                         ? "border-neutral-700 bg-neutral-800 text-neutral-300 hover:border-indigo-500 hover:bg-neutral-700 hover:text-white"
