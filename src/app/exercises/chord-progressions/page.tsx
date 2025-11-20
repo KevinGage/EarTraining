@@ -54,10 +54,13 @@ export default function ChordProgressionPage() {
     audioRef.current = { currentProgression, currentKey, use7ths };
   }, [currentProgression, currentKey, use7ths]);
 
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
 
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       stopAudio();
     };
   }, []);
@@ -118,8 +121,11 @@ export default function ChordProgressionPage() {
     setGameState("playing");
     try {
       await playProgression(prog, key, use7ths);
-      setIsPlaying(false);
-      setGameState("guessing");
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setGameState("guessing");
+      }
     } catch (error) {
       // Playback was cancelled, just reset state
       if (error instanceof Error && error.message === 'Playback cancelled') {
@@ -128,8 +134,11 @@ export default function ChordProgressionPage() {
         // Unexpected error - consider logging
         console.error('Unexpected playback error:', error);
       }
-      setIsPlaying(false);
-      setGameState("guessing");
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setGameState("guessing");
+      }
     }
   };
 
