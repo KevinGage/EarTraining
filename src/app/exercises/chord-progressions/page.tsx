@@ -156,7 +156,7 @@ export default function ChordProgressionPage() {
   };
 
   const handleChordClick = (chord: string) => {
-    if (gameState !== "guessing" && gameState !== "idle") return;
+    if (gameState !== "guessing" && gameState !== "idle" && gameState !== "playing") return;
     
     // Play the chord for feedback if enabled
     if (playOnClick) {
@@ -187,7 +187,7 @@ export default function ChordProgressionPage() {
   };
 
   const handleSlotClick = (index: number) => {
-    if (gameState !== "guessing" && gameState !== "idle") return;
+    if (gameState !== "guessing" && gameState !== "idle" && gameState !== "playing") return;
     
     // Don't allow editing the fixed root if enabled
     if (startOnRoot && index === 0) return;
@@ -223,7 +223,7 @@ export default function ChordProgressionPage() {
   };
 
   const clearAnswer = () => {
-    if (gameState !== "guessing" && gameState !== "idle") return;
+    if (gameState !== "guessing" && gameState !== "idle" && gameState !== "playing") return;
     const initialAnswer = startOnRoot ? ["I"] : [];
     setUserAnswer(initialAnswer);
     setEditingIndex(null);
