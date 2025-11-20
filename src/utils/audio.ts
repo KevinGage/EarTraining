@@ -17,7 +17,11 @@ const CHORD_INTERVALS: Record<string, number[]> = {
 // Scale degrees mapped to semitones from the root (Major scale)
 const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
 
+// Synth envelope release time in seconds
+const SYNTH_RELEASE_TIME = 1;
+
 let synth: Tone.PolySynth | null = null;
+let activePlaybackReject: ((reason?: Error) => void) | null = null;
 
 export const initAudio = async () => {
   if (Tone.context.state !== "running") {
@@ -32,16 +36,19 @@ export const initAudio = async () => {
         attack: 0.02,
         decay: 0.1,
         sustain: 0.3,
-        release: 1,
+        release: SYNTH_RELEASE_TIME,
       },
     }).toDestination();
     synth.volume.value = -10;
   }
 };
 
-export const playChord = (notes: string[], duration: string = "1n") => {
-  if (!synth) return;
-  synth.triggerAttackRelease(notes, duration);
+export const playChord = (notes: string[], duration: string = "1n", time?: number) => {
+  if (!synth) {
+    console.error("playChord called but synth is not initialized. Call initAudio() first.");
+    return;
+  }
+  synth.triggerAttackRelease(notes, duration, time);
 };
 
 export const getNotesForRomanNumeral = (
@@ -87,19 +94,50 @@ export const getNotesForRomanNumeral = (
   return notes;
 };
 
+export const stopAudio = () => {
+  // Reject any pending playback promise before cancelling
+  if (activePlaybackReject) {
+    activePlaybackReject(new Error('Playback cancelled'));
+    activePlaybackReject = null;
+  }
+  Tone.Transport.cancel();
+  Tone.Transport.stop();
+  Tone.Transport.position = 0;
+};
+
 export const playProgression = async (
   progression: string[], 
   keyRoot: string = "C4",
   use7ths: boolean = false,
   tempo: number = 120
-) => {
+): Promise<void> => {
   await initAudio();
-  const now = Tone.now();
-  const duration = "2n";
-  const timePerChord = Tone.Time(duration).toSeconds();
+  
+  // Stop any previous playback
+  stopAudio();
 
-  progression.forEach((roman, index) => {
-    const notes = getNotesForRomanNumeral(roman, keyRoot, use7ths);
-    synth?.triggerAttackRelease(notes, duration, now + index * timePerChord);
+  return new Promise((resolve, reject) => {
+    // Track this promise so it can be rejected if cancelled
+    activePlaybackReject = reject;
+    
+    const duration = "2n";
+    Tone.Transport.bpm.value = tempo;
+    const timePerChord = Tone.Time(duration).toSeconds();
+    
+    progression.forEach((roman, index) => {
+      const notes = getNotesForRomanNumeral(roman, keyRoot, use7ths);
+      Tone.Transport.schedule((time) => {
+        playChord(notes, duration, time);
+      }, index * timePerChord);
+    });
+
+    // Schedule completion after the last chord's release phase completes
+    Tone.Transport.schedule((time) => {
+      Tone.Transport.stop();
+      activePlaybackReject = null;
+      resolve();
+    }, progression.length * timePerChord + SYNTH_RELEASE_TIME);
+
+    Tone.Transport.start();
   });
 };

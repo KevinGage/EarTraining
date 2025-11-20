@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, Play, Settings, Check, X, Volume2, ChevronDown, ChevronUp, ArrowRight, RotateCcw } from "lucide-react";
-import { initAudio, playProgression, playChord, getNotesForRomanNumeral } from "@/utils/audio";
+import { playProgression, playChord, getNotesForRomanNumeral, stopAudio } from "@/utils/audio";
 
 // Game Constants
 const ALL_CHORDS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
@@ -53,6 +53,17 @@ export default function ChordProgressionPage() {
   useEffect(() => {
     audioRef.current = { currentProgression, currentKey, use7ths };
   }, [currentProgression, currentKey, use7ths]);
+
+  // Ref to track if component is mounted
+  const isMountedRef = useRef(true);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      stopAudio();
+    };
+  }, []);
 
   // Generate a new progression
   const generateProgression = () => {
@@ -108,9 +119,27 @@ export default function ChordProgressionPage() {
     
     setIsPlaying(true);
     setGameState("playing");
-    await playProgression(prog, key, use7ths);
-    setIsPlaying(false);
-    setGameState("guessing");
+    try {
+      await playProgression(prog, key, use7ths);
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setGameState("guessing");
+      }
+    } catch (error) {
+      // Playback was cancelled, just reset state
+      if (error instanceof Error && error.message === 'Playback cancelled') {
+        // Expected cancellation
+      } else {
+        // Unexpected error - consider logging
+        console.error('Unexpected playback error:', error);
+      }
+      // Only update state if component is still mounted
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setGameState("guessing");
+      }
+    }
   };
 
   const handleChordClick = (chord: string) => {
@@ -410,7 +439,7 @@ export default function ChordProgressionPage() {
           {/* Play Button */}
           <button
             onClick={() => handlePlay()}
-            disabled={currentProgression.length === 0 || isPlaying}
+            disabled={currentProgression.length === 0}
             className={`mb-12 flex h-24 w-24 items-center justify-center rounded-full border-4 transition-all ${
               isPlaying 
                 ? "scale-95 border-indigo-500/50 bg-indigo-500/10 text-indigo-400" 
