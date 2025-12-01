@@ -135,7 +135,8 @@ export const playProgression = async (
 
     // Schedule completion after the last chord's release phase completes
     // We add a small buffer to ensure the last note has fully released
-    const completionTime = progression.length * totalTimePerChord + SYNTH_RELEASE_TIME;
+    // We subtract 1 from length because the last chord doesn't need a delay after it
+    const completionTime = (progression.length - 1) * totalTimePerChord + durationSeconds + SYNTH_RELEASE_TIME;
     
     Tone.Transport.schedule((time) => {
       Tone.Transport.stop();
