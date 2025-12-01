@@ -135,7 +135,7 @@ export default function ChordProgressionPage() {
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsPlaying(false);
-        // Only restore state if we changed it
+        // Only restore state if we changed it AND the state hasn't been updated to "revealed" in the meantime
         if (!wasRevealed) {
           // Use functional update to check if state changed to 'revealed' during playback
           setGameState(prev => prev === "revealed" ? "revealed" : "guessing");
@@ -152,7 +152,7 @@ export default function ChordProgressionPage() {
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsPlaying(false);
-        // Only restore state if we changed it
+        // Only restore state if we changed it AND the state hasn't been updated to "revealed" in the meantime
         if (!wasRevealed) {
           // Use functional update to check if state changed to 'revealed' during playback
           setGameState(prev => prev === "revealed" ? "revealed" : "guessing");
