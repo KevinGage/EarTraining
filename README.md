@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ear Trainer
+
+A modern, interactive ear training application built for musicians of all levels. This tool helps you improve your aural skills through customizable exercises, starting with Chord Progressions.
+
+![Ear Trainer](/src/app/icon.png)
+
+## Features
+
+### 🎵 Chord Progression Trainer
+Master the ability to identify chord progressions by ear.
+- **Customizable Length**: Practice with progressions of 2 to 6 chords.
+- **Key & Octave Control**: Train in random keys or focus on specific keys and octaves.
+- **Diatonic Chords**: Includes all diatonic triads and 7th chords (I, ii, iii, IV, V, vi, vii°).
+- **Interactive Gameplay**:
+    - **Play/Replay**: Listen to the progression as many times as needed.
+    - **Edit Answers**: Click any slot to change your answer.
+    - **Instant Feedback**: See exactly where you went wrong and what the correct progression was.
+    - **Score Tracking**: Keep track of your streak and accuracy.
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (React)
+- **Language**: TypeScript
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Audio**: [Tone.js](https://tonejs.github.io/) for real-time in-browser audio synthesis.
+- **Icons**: [Lucide React](https://lucide.dev/)
 
 ## Getting Started
 
-First, run the development server:
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/KevinGage/EarTraining.git
+    cd EarTraining
+    ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4.  **Open your browser:**
+    Navigate to [http://localhost:3000](http://localhost:3000) to start training.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](LICENSE)

@@ -43,7 +43,7 @@ export const initAudio = async () => {
   }
 };
 
-export const playChord = (notes: string[], duration: string = "1n", time?: number) => {
+export const playChord = (notes: string[], duration: string | number = "1n", time?: number) => {
   if (!synth) {
     console.error("playChord called but synth is not initialized. Call initAudio() first.");
     return;
@@ -109,7 +109,8 @@ export const playProgression = async (
   progression: string[], 
   keyRoot: string = "C4",
   use7ths: boolean = false,
-  tempo: number = 120
+  chordDurationMs: number = 1000,
+  chordDelayMs: number = 0
 ): Promise<void> => {
   await initAudio();
   
@@ -120,23 +121,28 @@ export const playProgression = async (
     // Track this promise so it can be rejected if cancelled
     activePlaybackReject = reject;
     
-    const duration = "2n";
-    Tone.Transport.bpm.value = tempo;
-    const timePerChord = Tone.Time(duration).toSeconds();
+    // Convert ms to seconds for Tone.js
+    const durationSeconds = chordDurationMs / 1000;
+    const delaySeconds = chordDelayMs / 1000;
+    const totalTimePerChord = durationSeconds + delaySeconds;
     
     progression.forEach((roman, index) => {
       const notes = getNotesForRomanNumeral(roman, keyRoot, use7ths);
       Tone.Transport.schedule((time) => {
-        playChord(notes, duration, time);
-      }, index * timePerChord);
+        playChord(notes, durationSeconds, time);
+      }, index * totalTimePerChord);
     });
 
     // Schedule completion after the last chord's release phase completes
+    // We add a small buffer to ensure the last note has fully released
+    // We subtract 1 from length because the last chord doesn't need a delay after it
+    const completionTime = (progression.length - 1) * totalTimePerChord + durationSeconds + SYNTH_RELEASE_TIME;
+    
     Tone.Transport.schedule((time) => {
       Tone.Transport.stop();
       activePlaybackReject = null;
       resolve();
-    }, progression.length * timePerChord + SYNTH_RELEASE_TIME);
+    }, completionTime);
 
     Tone.Transport.start();
   });
