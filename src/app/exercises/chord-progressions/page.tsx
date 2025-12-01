@@ -25,6 +25,8 @@ export default function ChordProgressionPage() {
   const [fixedOctave, setFixedOctave] = useState<number>(4);
   const [use7ths, setUse7ths] = useState(false);
   const [playOnClick, setPlayOnClick] = useState(false);
+  const [chordDuration, setChordDuration] = useState(1000);
+  const [chordDelay, setChordDelay] = useState(500);
   
   // Game State
   const [currentProgression, setCurrentProgression] = useState<string[]>([]);
@@ -46,13 +48,13 @@ export default function ChordProgressionPage() {
     setFeedback([]);
     setGameState("idle");
     setEditingIndex(null);
-  }, [progressionLength, startOnRoot, allowedChords, selectedKey, availableOctaves, fixedOctave, use7ths, playOnClick]);
+  }, [progressionLength, startOnRoot, allowedChords, selectedKey, availableOctaves, fixedOctave, use7ths, playOnClick, chordDuration, chordDelay]);
 
   // Refs for audio to avoid stale closures
-  const audioRef = useRef({ currentProgression, currentKey, use7ths });
+  const audioRef = useRef({ currentProgression, currentKey, use7ths, chordDuration, chordDelay });
   useEffect(() => {
-    audioRef.current = { currentProgression, currentKey, use7ths };
-  }, [currentProgression, currentKey, use7ths]);
+    audioRef.current = { currentProgression, currentKey, use7ths, chordDuration, chordDelay };
+  }, [currentProgression, currentKey, use7ths, chordDuration, chordDelay]);
 
   // Ref to track if component is mounted
   const isMountedRef = useRef(true);
@@ -114,6 +116,8 @@ export default function ChordProgressionPage() {
   const handlePlay = async (progressionToPlay?: string[], keyToPlay?: string, forceNewGame: boolean = false) => {
     const prog = progressionToPlay || audioRef.current.currentProgression;
     const key = keyToPlay || audioRef.current.currentKey;
+    const duration = audioRef.current.chordDuration;
+    const delay = audioRef.current.chordDelay;
     
     if (prog.length === 0) return;
     
@@ -127,13 +131,14 @@ export default function ChordProgressionPage() {
     }
 
     try {
-      await playProgression(prog, key, use7ths);
+      await playProgression(prog, key, use7ths, duration, delay);
       // Only update state if component is still mounted
       if (isMountedRef.current) {
         setIsPlaying(false);
         // Only restore state if we changed it
         if (!wasRevealed) {
-          setGameState("guessing");
+          // Use functional update to check if state changed to 'revealed' during playback
+          setGameState(prev => prev === "revealed" ? "revealed" : "guessing");
         }
       }
     } catch (error) {
@@ -149,7 +154,8 @@ export default function ChordProgressionPage() {
         setIsPlaying(false);
         // Only restore state if we changed it
         if (!wasRevealed) {
-          setGameState("guessing");
+          // Use functional update to check if state changed to 'revealed' during playback
+          setGameState(prev => prev === "revealed" ? "revealed" : "guessing");
         }
       }
     }
@@ -391,6 +397,31 @@ export default function ChordProgressionPage() {
                       />
                       Play Sound on Click
                     </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-neutral-400">Chord Duration (ms)</label>
+                      <input
+                        type="number"
+                        min="100"
+                        step="100"
+                        value={chordDuration}
+                        onChange={(e) => setChordDuration(Number(e.target.value))}
+                        className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-neutral-400">Delay Between (ms)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={chordDelay}
+                        onChange={(e) => setChordDelay(Number(e.target.value))}
+                        className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
